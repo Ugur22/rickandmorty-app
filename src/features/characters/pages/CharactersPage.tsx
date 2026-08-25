@@ -35,7 +35,7 @@ export function CharactersPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
-      <h1 className="mb-4 text-2xl font-semibold text-neutral-900">Characters</h1>
+      <h1 className="mb-4 text-2xl font-semibold text-neutral-900 dark:text-neutral-100">Characters</h1>
       <SearchInput value={search} onChange={setSearch} placeholder="Search characters by name…" />
       <div className="mt-6">
         {match(state)

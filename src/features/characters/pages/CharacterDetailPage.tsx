@@ -34,24 +34,24 @@ export function CharacterDetailPage() {
                 className="h-48 w-48 rounded-lg object-cover shadow-sm"
               />
               <div>
-                <h1 className="text-2xl font-semibold text-neutral-900">{character.name}</h1>
-                <p className="mt-1 flex items-center gap-1.5 text-neutral-600">
+                <h1 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-100">{character.name}</h1>
+                <p className="mt-1 flex items-center gap-1.5 text-neutral-600 dark:text-neutral-400">
                   <span className={`inline-block h-2 w-2 rounded-full ${STATUS_DOT[character.status]}`} />
                   {character.status} · {character.species}
                   {character.type ? ` (${character.type})` : ''}
                 </p>
                 <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
-                  <dt className="text-neutral-500">Gender</dt>
-                  <dd className="text-neutral-900">{character.gender}</dd>
-                  <dt className="text-neutral-500">Origin</dt>
-                  <dd className="text-neutral-900">{character.origin.name}</dd>
-                  <dt className="text-neutral-500">Last known location</dt>
-                  <dd className="text-neutral-900">{character.location.name}</dd>
+                  <dt className="text-neutral-500 dark:text-neutral-400">Gender</dt>
+                  <dd className="text-neutral-900 dark:text-neutral-100">{character.gender}</dd>
+                  <dt className="text-neutral-500 dark:text-neutral-400">Origin</dt>
+                  <dd className="text-neutral-900 dark:text-neutral-100">{character.origin.name}</dd>
+                  <dt className="text-neutral-500 dark:text-neutral-400">Last known location</dt>
+                  <dd className="text-neutral-900 dark:text-neutral-100">{character.location.name}</dd>
                 </dl>
               </div>
             </div>
 
-            <h2 className="mt-8 mb-3 text-lg font-semibold text-neutral-900">
+            <h2 className="mt-8 mb-3 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
               Appears in {character.episode.length} episode{character.episode.length === 1 ? '' : 's'}
             </h2>
             <div className="flex flex-col gap-3">

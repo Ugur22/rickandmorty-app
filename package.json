@@ -12,9 +12,11 @@
   },
   "dependencies": {
     "@apollo/client": "^4.2.12",
+    "@reduxjs/toolkit": "^2.12.0",
     "graphql": "^16.14.2",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "react-redux": "^9.3.0",
     "react-router-dom": "^7.18.2",
     "ts-pattern": "^5.9.0"
   },

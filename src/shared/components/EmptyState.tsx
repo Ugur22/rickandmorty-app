@@ -3,5 +3,5 @@ interface EmptyStateProps {
 }
 
 export function EmptyState({ message }: EmptyStateProps) {
-  return <div className="flex justify-center py-16 text-neutral-500">{message}</div>
+  return <div className="flex justify-center py-16 text-neutral-500 dark:text-neutral-400">{message}</div>
 }

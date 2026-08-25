@@ -11,7 +11,7 @@ interface PaginationProps {
 }
 
 const BUTTON_CLASSES =
-  'rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 disabled:cursor-not-allowed disabled:opacity-40 hover:bg-neutral-100'
+  'rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 disabled:cursor-not-allowed disabled:opacity-40 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800'
 
 export function Pagination({ info, page, onPageChange }: PaginationProps) {
   return (
@@ -24,7 +24,7 @@ export function Pagination({ info, page, onPageChange }: PaginationProps) {
       >
         Previous
       </button>
-      <span className="text-sm text-neutral-600">
+      <span className="text-sm text-neutral-600 dark:text-neutral-400">
         Page {page} of {info.pages}
       </span>
       <button
