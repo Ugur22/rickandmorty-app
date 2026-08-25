@@ -1,7 +1,7 @@
 interface EmptyStateProps {
-  message?: string
+  message: string
 }
 
-export function EmptyState({ message = 'No results found.' }: EmptyStateProps) {
+export function EmptyState({ message }: EmptyStateProps) {
   return <div className="flex justify-center py-16 text-neutral-500">{message}</div>
 }

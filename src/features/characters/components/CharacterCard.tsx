@@ -2,6 +2,7 @@ import { memo } from 'react'
 import { Link } from 'react-router-dom'
 import { gql } from '@apollo/client'
 import type { CharacterSummary } from '../types'
+import { STATUS_DOT } from '../statusDot'
 
 // Colocated with the component so SEARCH_CHARACTERS (and any future query
 // feeding a character grid) stays in sync with what this card renders.
@@ -14,12 +15,6 @@ export const CHARACTER_CARD_FIELDS = gql`
     image
   }
 `
-
-const STATUS_DOT: Record<CharacterSummary['status'], string> = {
-  Alive: 'bg-emerald-500',
-  Dead: 'bg-red-500',
-  unknown: 'bg-neutral-400',
-}
 
 interface CharacterCardProps {
   character: CharacterSummary

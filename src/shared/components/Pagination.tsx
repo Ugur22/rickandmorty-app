@@ -10,6 +10,9 @@ interface PaginationProps {
   onPageChange: (page: number) => void
 }
 
+const BUTTON_CLASSES =
+  'rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 disabled:cursor-not-allowed disabled:opacity-40 hover:bg-neutral-100'
+
 export function Pagination({ info, page, onPageChange }: PaginationProps) {
   return (
     <div className="flex items-center justify-center gap-4 py-6">
@@ -17,7 +20,7 @@ export function Pagination({ info, page, onPageChange }: PaginationProps) {
         type="button"
         onClick={() => info.prev && onPageChange(info.prev)}
         disabled={!info.prev}
-        className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 disabled:cursor-not-allowed disabled:opacity-40 hover:bg-neutral-100"
+        className={BUTTON_CLASSES}
       >
         Previous
       </button>
@@ -28,7 +31,7 @@ export function Pagination({ info, page, onPageChange }: PaginationProps) {
         type="button"
         onClick={() => info.next && onPageChange(info.next)}
         disabled={!info.next}
-        className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 disabled:cursor-not-allowed disabled:opacity-40 hover:bg-neutral-100"
+        className={BUTTON_CLASSES}
       >
         Next
       </button>

@@ -6,12 +6,7 @@ import { toQueryState } from '../../../shared/types/queryState'
 import { GET_CHARACTER } from '../queries'
 import { EpisodeListItem } from '../../episodes/components/EpisodeListItem'
 import { CharacterDetailSkeleton } from '../components/CharacterDetailSkeleton'
-
-const STATUS_DOT: Record<string, string> = {
-  Alive: 'bg-emerald-500',
-  Dead: 'bg-red-500',
-  unknown: 'bg-neutral-400',
-}
+import { STATUS_DOT } from '../statusDot'
 
 export function CharacterDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -19,7 +14,7 @@ export function CharacterDetailPage() {
     variables: { id: id! },
   })
 
-  const state = toQueryState(loading, error, data?.character, () => false)
+  const state = toQueryState(loading, error, data?.character)
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
@@ -27,7 +22,7 @@ export function CharacterDetailPage() {
         ← Back to characters
       </Link>
       {match(state)
-        .with({ status: 'loading' }, () => <CharacterDetailSkeleton />)
+        .with({ status: 'idle' }, { status: 'loading' }, () => <CharacterDetailSkeleton />)
         .with({ status: 'error' }, ({ message }) => <ErrorState message={message} />)
         .with({ status: 'empty' }, () => <ErrorState message="Character not found." />)
         .with({ status: 'success' }, ({ data: character }) => (

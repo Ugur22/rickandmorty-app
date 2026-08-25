@@ -1,6 +1,7 @@
 import type { ErrorLike } from '@apollo/client'
 
 export type QueryState<T> =
+  | { status: 'idle' }
   | { status: 'loading' }
   | { status: 'error'; message: string }
   | { status: 'empty' }
@@ -10,8 +11,10 @@ export function toQueryState<T>(
   loading: boolean,
   error: ErrorLike | undefined,
   data: T | undefined,
-  isEmpty: (data: T) => boolean,
+  isEmpty: (data: T) => boolean = () => false,
+  skip = false,
 ): QueryState<T> {
+  if (skip) return { status: 'idle' }
   if (loading) return { status: 'loading' }
   if (error) return { status: 'error', message: error.message }
   if (!data || isEmpty(data)) return { status: 'empty' }

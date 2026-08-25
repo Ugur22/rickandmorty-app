@@ -7,12 +7,14 @@ import { ErrorState } from '../../../shared/components/ErrorState'
 import { EmptyState } from '../../../shared/components/EmptyState'
 import { toQueryState } from '../../../shared/types/queryState'
 import { useDebouncedValue } from '../../../shared/hooks/useDebouncedValue'
-import { MIN_SEARCH_LENGTH } from '../../../shared/searchConfig'
+import { MIN_SEARCH_LENGTH, minSearchLengthMessage } from '../../../shared/searchConfig'
 import { SEARCH_EPISODES } from '../queries'
 import { EpisodeListItem } from '../components/EpisodeListItem'
 import { EpisodeListItemSkeleton } from '../components/EpisodeListItemSkeleton'
 import { classifyEpisodeSearch } from '../utils/episodeSearchClassifier'
 import type { SearchEpisodesVars } from '../types'
+
+const SKELETON_KEYS = Array.from({ length: 5 }, (_, index) => index)
 
 export function EpisodesPage() {
   const [search, setSearch] = useState('')
@@ -37,36 +39,33 @@ export function EpisodesPage() {
     skip: isNameTooShort,
   })
 
-  const state = toQueryState(loading, error, data?.episodes, (d) => d.results.length === 0)
+  const state = toQueryState(loading, error, data?.episodes, (d) => d.results.length === 0, isNameTooShort)
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
       <h1 className="mb-4 text-2xl font-semibold text-neutral-900">Episodes</h1>
       <SearchInput value={search} onChange={setSearch} placeholder="Search by name or code (e.g. S01E01)…" />
       <div className="mt-6 flex flex-col gap-3">
-        {isNameTooShort ? (
-          <EmptyState message={`Keep typing… (at least ${MIN_SEARCH_LENGTH} characters)`} />
-        ) : (
-          match(state)
-            .with({ status: 'loading' }, () => (
-              <div role="status" aria-label="Loading episodes" className="flex flex-col gap-3">
-                {Array.from({ length: 5 }, (_, index) => (
-                  <EpisodeListItemSkeleton key={index} />
-                ))}
-              </div>
-            ))
-            .with({ status: 'error' }, ({ message }) => <ErrorState message={message} />)
-            .with({ status: 'empty' }, () => <EmptyState message="No episodes found." />)
-            .with({ status: 'success' }, ({ data }) => (
-              <>
-                {data.results.map((episode) => (
-                  <EpisodeListItem key={episode.id} episode={episode} />
-                ))}
-                <Pagination info={data.info} page={page} onPageChange={setPage} />
-              </>
-            ))
-            .exhaustive()
-        )}
+        {match(state)
+          .with({ status: 'idle' }, () => <EmptyState message={minSearchLengthMessage()} />)
+          .with({ status: 'loading' }, () => (
+            <div role="status" aria-label="Loading episodes" className="flex flex-col gap-3">
+              {SKELETON_KEYS.map((key) => (
+                <EpisodeListItemSkeleton key={key} />
+              ))}
+            </div>
+          ))
+          .with({ status: 'error' }, ({ message }) => <ErrorState message={message} />)
+          .with({ status: 'empty' }, () => <EmptyState message="No episodes found." />)
+          .with({ status: 'success' }, ({ data }) => (
+            <>
+              {data.results.map((episode) => (
+                <EpisodeListItem key={episode.id} episode={episode} />
+              ))}
+              <Pagination info={data.info} page={page} onPageChange={setPage} />
+            </>
+          ))
+          .exhaustive()}
       </div>
     </div>
   )

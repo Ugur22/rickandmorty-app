@@ -1,6 +1,8 @@
 import { Skeleton } from '../../../shared/components/Skeleton'
 import { EpisodeListItemSkeleton } from '../../episodes/components/EpisodeListItemSkeleton'
 
+const SKELETON_KEYS = Array.from({ length: 4 }, (_, index) => index)
+
 export function CharacterDetailSkeleton() {
   return (
     <div role="status" aria-label="Loading character">
@@ -18,8 +20,8 @@ export function CharacterDetailSkeleton() {
       </div>
       <Skeleton className="mt-8 mb-3 h-5 w-56" />
       <div className="flex flex-col gap-3">
-        {Array.from({ length: 4 }, (_, index) => (
-          <EpisodeListItemSkeleton key={index} />
+        {SKELETON_KEYS.map((key) => (
+          <EpisodeListItemSkeleton key={key} />
         ))}
       </div>
     </div>
