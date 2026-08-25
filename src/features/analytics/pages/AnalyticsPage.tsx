@@ -3,6 +3,7 @@ import { EmptyState } from '../../../shared/components/EmptyState'
 import { useFetchAllPages } from '../hooks/useFetchAllPages'
 import { ALL_EPISODES_PAGE, ALL_LOCATIONS_PAGE } from '../queries'
 import { AnalyticsBoard } from '../components/AnalyticsBoard'
+import { AnalyticsBoardSkeleton } from '../components/AnalyticsBoardSkeleton'
 
 export function AnalyticsPage() {
   const episodesState = useFetchAllPages(ALL_EPISODES_PAGE, (data) => data.episodes)
@@ -25,13 +26,7 @@ export function AnalyticsPage() {
       ) : episodesState.status === 'success' && locationsState.status === 'success' ? (
         <AnalyticsBoard episodes={episodesState.data} locations={locationsState.data} />
       ) : (
-        <div
-          role="status"
-          aria-label="Loading analytics"
-          className="py-16 text-center text-neutral-500 dark:text-neutral-400"
-        >
-          Loading analytics…
-        </div>
+        <AnalyticsBoardSkeleton />
       )}
     </div>
   )
