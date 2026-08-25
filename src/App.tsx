@@ -20,6 +20,9 @@ function App() {
           <NavLink to="/episodes" className={linkClasses}>
             Episodes
           </NavLink>
+          <NavLink to="/analytics" className={linkClasses}>
+            Analytics
+          </NavLink>
           <ThemeToggle />
         </nav>
       </header>
