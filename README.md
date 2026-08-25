@@ -61,6 +61,28 @@ npm run build     # production build
   rest of the app doesn't have expensive computations or unstable callback identities that would
   benefit from it, so adding it there would just be overhead for its own sake.
 
+## GraphQL query design
+
+- **Fragments colocated with the components that consume them.** `EpisodeListItemFields`
+  (`features/episodes/components/EpisodeListItem.tsx`) and `CharacterCardFields`
+  (`features/characters/components/CharacterCard.tsx`) are defined next to the component that
+  renders exactly those fields, then spread into every query that feeds that component.
+  `EpisodeListItemFields` in particular is spread into both `SEARCH_EPISODES` and `GET_CHARACTER`
+  (a character's `episode` sub-selection) — before this, the same four fields were hand-typed out
+  twice across two query files, which is exactly the kind of drift a fragment prevents: change
+  what the list item needs once, both queries pick it up.
+- **Query documents are typed once, at the source.** Each query constant is annotated as
+  `TypedDocumentNode<TData, TVariables>` (e.g. `SEARCH_CHARACTERS: TypedDocumentNode<SearchCharactersData, SearchCharactersVars>`)
+  rather than passing `useQuery<TData, TVariables>(...)` generics at every call site — the latter
+  is deprecated in Apollo Client 4 and, more importantly, is a second place the two types could
+  drift out of sync with the query they're paired with.
+- **Gotcha hit while wiring this up**: `MockedProvider` test fixtures must include `__typename` on
+  mocked objects once a query reads a field through a named fragment. Apollo's cache checks a
+  fragment's `on Episode`/`on Character` type condition before including its fields on read;
+  without `__typename` in the mock payload that check silently fails and the field comes back
+  empty rather than erroring. Inline (non-fragment) field selections don't have this requirement,
+  which is why it only surfaced after introducing fragments.
+
 ## Loading states
 
 Both list pages and the character detail page render skeleton placeholders shaped like the real
@@ -76,4 +98,3 @@ as "the page is already there, just filling in."
   testing as a CORS-looking `Failed to fetch`, which is actually a non-2xx response missing
   CORS headers) — not something the app works around, since Apollo has no retry link configured.
 - No bonus feature implemented (left for after core review).
-# rickandmorty-app
