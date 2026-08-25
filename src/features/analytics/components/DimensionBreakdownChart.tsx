@@ -4,7 +4,7 @@ import { useAppSelector } from '../../../app/hooks'
 import { CARD_SURFACE } from '../../../shared/styles'
 import { locationCountByDimension } from '../utils/aggregate'
 import type { AnalyticsLocation } from '../types'
-import { CHART_COLORS } from './chartColors'
+import { CHART_COLORS, NO_ENTRANCE_ANIMATION } from './chartColors'
 import { makeChartTooltip } from './ChartTooltipContent'
 
 const AGGREGATE_BUCKETS = new Set(['Unknown', 'Other'])
@@ -65,6 +65,7 @@ export function DimensionBreakdownChart({ locations }: DimensionBreakdownChartPr
               dataKey="count"
               radius={[0, 4, 4, 0]}
               maxBarSize={24}
+              {...NO_ENTRANCE_ANIMATION}
               onMouseEnter={(_, index) => setActiveIndex(index)}
               onMouseLeave={() => setActiveIndex(null)}
             >

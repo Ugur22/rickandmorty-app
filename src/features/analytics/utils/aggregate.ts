@@ -12,6 +12,30 @@ export function castSizeByEpisode(episodes: AnalyticsEpisode[]): EpisodeCastSize
     .sort((a, b) => a.code.localeCompare(b.code))
 }
 
+export interface SeasonSparkline {
+  season: string
+  label: string
+  points: EpisodeCastSize[]
+}
+
+export function castSizeBySeason(episodes: AnalyticsEpisode[]): SeasonSparkline[] {
+  // castSizeByEpisode is sorted by code, so insertion order into the Map is
+  // already ascending by season — no separate sort needed before mapping.
+  const bySeason = new Map<string, EpisodeCastSize[]>()
+  for (const entry of castSizeByEpisode(episodes)) {
+    const season = entry.code.slice(0, 3) // "S01E01" -> "S01"
+    const points = bySeason.get(season) ?? []
+    points.push(entry)
+    bySeason.set(season, points)
+  }
+
+  return [...bySeason.entries()].map(([season, points]) => ({
+    season,
+    label: `Season ${Number(season.slice(1))}`,
+    points,
+  }))
+}
+
 export interface DimensionCount {
   dimension: string
   count: number

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { castSizeByEpisode, locationCountByDimension } from './aggregate'
+import { castSizeByEpisode, castSizeBySeason, locationCountByDimension } from './aggregate'
 import type { AnalyticsEpisode, AnalyticsLocation } from '../types'
 
 function episode(episode: string, name: string, characterCount: number): AnalyticsEpisode {
@@ -22,6 +22,32 @@ describe('castSizeByEpisode', () => {
     expect(castSizeByEpisode(episodes)).toEqual([
       { code: 'S01E01', name: 'Pilot', count: 3 },
       { code: 'S01E02', name: 'Lawnmower Dog', count: 5 },
+    ])
+  })
+})
+
+describe('castSizeBySeason', () => {
+  it('groups episodes by season, sorted, with each season\'s points in episode order', () => {
+    const episodes = [
+      episode('S02E01', 'A Rickle in Time', 4),
+      episode('S01E02', 'Lawnmower Dog', 5),
+      episode('S01E01', 'Pilot', 3),
+    ]
+
+    expect(castSizeBySeason(episodes)).toEqual([
+      {
+        season: 'S01',
+        label: 'Season 1',
+        points: [
+          { code: 'S01E01', name: 'Pilot', count: 3 },
+          { code: 'S01E02', name: 'Lawnmower Dog', count: 5 },
+        ],
+      },
+      {
+        season: 'S02',
+        label: 'Season 2',
+        points: [{ code: 'S02E01', name: 'A Rickle in Time', count: 4 }],
+      },
     ])
   })
 })

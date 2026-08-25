@@ -4,7 +4,7 @@ import { useAppSelector } from '../../../app/hooks'
 import { CARD_SURFACE } from '../../../shared/styles'
 import { castSizeByEpisode } from '../utils/aggregate'
 import type { AnalyticsEpisode } from '../types'
-import { CHART_COLORS } from './chartColors'
+import { CHART_COLORS, NO_ENTRANCE_ANIMATION } from './chartColors'
 import { makeChartTooltip } from './ChartTooltipContent'
 
 interface EpisodeCastSizeChartProps {
@@ -55,6 +55,7 @@ export function EpisodeCastSizeChart({ episodes }: EpisodeCastSizeChartProps) {
               dataKey="count"
               radius={[4, 4, 0, 0]}
               maxBarSize={24}
+              {...NO_ENTRANCE_ANIMATION}
               onMouseEnter={(_, index) => setActiveIndex(index)}
               onMouseLeave={() => setActiveIndex(null)}
             >

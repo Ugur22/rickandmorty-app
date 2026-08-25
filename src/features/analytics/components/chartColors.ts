@@ -1,5 +1,11 @@
 import type { ThemeMode } from '../../theme/themeSlice'
 
+// Recharts' entrance animation can get stuck rendering a series at zero size
+// if the chart mounts while the page layout is still settling (e.g. a
+// ResizeObserver measuring before the final layout pass). Spread this onto
+// every Bar/Line so no chart has to remember to disable it individually.
+export const NO_ENTRANCE_ANIMATION = { isAnimationActive: false } as const
+
 // Recharts renders raw SVG, which Tailwind's class-based dark mode can't reach —
 // colors have to be resolved to hex and passed as props instead.
 export const CHART_COLORS: Record<

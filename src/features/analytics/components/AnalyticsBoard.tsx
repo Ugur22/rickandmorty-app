@@ -3,10 +3,11 @@ import { createSwapy } from 'swapy'
 import type { Swapy, SwapEndEvent } from 'swapy'
 import { EpisodeCastSizeChart } from './EpisodeCastSizeChart'
 import { DimensionBreakdownChart } from './DimensionBreakdownChart'
+import { SeasonTrendSparklines } from './SeasonTrendSparklines'
 import type { AnalyticsEpisode, AnalyticsLocation } from '../types'
 
 const TILE_ORDER_STORAGE_KEY = 'analytics-tile-order'
-const TILE_IDS = ['cast-size', 'dimensions'] as const
+const TILE_IDS = ['cast-size', 'dimensions', 'season-trend'] as const
 type TileId = (typeof TILE_IDS)[number]
 const SLOT_IDS = TILE_IDS.map((_, index) => `slot-${index + 1}`)
 
@@ -53,12 +54,18 @@ export function AnalyticsBoard({ episodes, locations }: AnalyticsBoardProps) {
   const tiles: Record<TileId, React.ReactNode> = {
     'cast-size': <EpisodeCastSizeChart episodes={episodes} />,
     dimensions: <DimensionBreakdownChart locations={locations} />,
+    'season-trend': <SeasonTrendSparklines episodes={episodes} />,
   }
 
   return (
     <div ref={containerRef} className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2">
       {order.map((tileId, index) => (
-        <div key={SLOT_IDS[index]} data-swapy-slot={SLOT_IDS[index]} className="h-full">
+        <div
+          key={SLOT_IDS[index]}
+          data-swapy-slot={SLOT_IDS[index]}
+          // The last slot spans the full row — as wide as the ones above it combined.
+          className={`h-full ${index === SLOT_IDS.length - 1 ? 'md:col-span-2' : ''}`}
+        >
           <div data-swapy-item={tileId} className="flex h-full flex-col">
             <div
               data-swapy-handle
