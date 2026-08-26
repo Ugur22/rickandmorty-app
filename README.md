@@ -2,8 +2,9 @@
 
 A small app to search Rick & Morty characters and episodes, built against the
 [Rick and Morty GraphQL API](https://rickandmortyapi.com/documentation/#graphql) for a
-frontend assessment. Time-boxed to ~4 hours, so the tech choices below favor a lean, correct,
-well-organized app over maximal engineering.
+frontend assessment. The brief was time-boxed to ~4 hours; the core (search, detail pages,
+loading/error states) stayed within that, and the extra time went into the bonus Analytics
+page below.
 
 ## Running it
 
@@ -21,6 +22,12 @@ npm run build     # production build
   location, plus every episode they appear in.
 - **Episodes** (`/episodes`) — a single search box that accepts either an episode name
   (e.g. "Pilot") or its code (e.g. "S01E01"), auto-detected client-side.
+- **Analytics** (`/analytics`, bonus) — a dashboard aggregated across every episode and
+  location in the API: cast size per episode, cast size trend per season (sparklines), and
+  a top-10 breakdown of locations by dimension. Tiles are drag-to-reorder (via `swapy`) and
+  the order persists to `localStorage`. See [Bonus: Analytics](#bonus-analytics) below.
+- **Dark mode** — a header toggle switches the whole app between light and dark, persisted
+  across visits.
 
 ## Tech choices
 
@@ -29,9 +36,15 @@ npm run build     # production build
   per the assessment brief. The character-detail query pulls the character's `episode` field
   directly, so no second round-trip is needed to list the episodes they appear in.
 - **Tailwind CSS v4** via the official Vite plugin.
-- **No global state library.** Apollo's cache already owns server state; the only client state
-  (search text, current page) is local `useState`, added per-component rather than centralized.
-- **Feature-based folders** (`features/characters`, `features/episodes`, `shared/`).
+- **Apollo owns server state; Redux Toolkit owns the one piece of cross-cutting client
+  state.** Per-page state (search text, current page) stays local `useState` — it's not
+  shared outside the component that owns it. Theme mode is different: it's read by the
+  header toggle, persisted to `localStorage`, *and* read by every chart in Analytics to pick
+  a light/dark palette (Recharts renders to SVG, so it can't just inherit Tailwind's `dark:`
+  classes). Prop-drilling that into three chart components wasn't worth it, so it's the one
+  slice of global state in the app (`app/store.ts`, `features/theme/themeSlice.ts`).
+- **Feature-based folders** (`features/characters`, `features/episodes`, `features/analytics`,
+  `features/theme`, `shared/`).
 - **`ts-pattern`** for the two genuinely discriminated-union spots: classifying a search string
   as a code/name/empty (`features/episodes/utils/episodeSearchClassifier.ts`), and rendering
   Apollo's loading/error/empty/success states consistently across both list pages
@@ -90,6 +103,31 @@ content (`*Skeleton.tsx` components, built on a shared `shared/components/Skelet
 primitive) instead of a generic spinner — this avoids layout shift when results arrive and reads
 as "the page is already there, just filling in."
 
+## Bonus: Analytics
+
+`/analytics` (`features/analytics/`) aggregates across the *entire* dataset rather than one
+page of results, so it needed its own data path:
+
+- **`useFetchAllPages`** (`hooks/useFetchAllPages.ts`) walks a paginated query end-to-end via
+  `client.query` in a loop (following `info.next` until it's `null`), independent of Apollo's
+  normal `useQuery`-per-page flow used elsewhere in the app.
+- **Aggregation is plain functions, not components** (`utils/aggregate.ts`), so it's unit-tested
+  directly (`aggregate.test.ts`) without rendering anything: cast size per episode, cast size
+  grouped by season (parsed from the episode code, e.g. `"S01E01"` → season `"S01"`), and
+  location counts by dimension, with the API's inconsistent "unknown dimension" sentinels
+  (`''`, `'unknown'`, `'Unknown dimension'`) collapsed into one bucket and long tails folded
+  into an "Other" bucket past the top 10 — otherwise the chart is mostly illegible slivers.
+- **Recharts** for the charts themselves — SVG-based, so it renders crisply at any size and
+  doesn't drag in a canvas runtime for what's fundamentally three simple charts.
+- **`swapy`** for drag-to-reorder tiles — a small, unopinionated library that works directly
+  against existing DOM nodes (`data-swapy-slot`/`data-swapy-item` attributes) rather than
+  owning its own component tree, so it drops into the existing tile markup instead of
+  requiring the charts to be restructured around it. Order persists to `localStorage`.
+- Charts read `theme.mode` from Redux directly (`useAppSelector`) rather than through CSS,
+  since Recharts' colors are JS props, not classes Tailwind's `dark:` variant can reach.
+- The `/analytics` route is lazy-loaded (`router.tsx`) so Recharts' bundle weight is only paid
+  by visitors who actually open the page.
+
 ## Known limitations (explicit tradeoffs for the time budget)
 
 - No URL-synced search state (`?q=`) — searches aren't shareable/bookmarkable.
@@ -97,4 +135,5 @@ as "the page is already there, just filling in."
 - The public API rate-limits aggressively under rapid successive requests (observed during
   testing as a CORS-looking `Failed to fetch`, which is actually a non-2xx response missing
   CORS headers) — not something the app works around, since Apollo has no retry link configured.
-- No bonus feature implemented (left for after core review).
+  `useFetchAllPages` is the most exposed to this, since it fires every page of a paginated
+  query back-to-back with no throttling between requests.
