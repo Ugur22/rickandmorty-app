@@ -5,6 +5,12 @@ import type { PageInfo } from '../../../shared/types/pageInfo'
 import type { QueryState } from '../../../shared/types/queryState'
 import type { PageVars } from '../types'
 
+const PAGE_DELAY_MS = 200
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
 export function useFetchAllPages<TData, TItem>(
   query: TypedDocumentNode<TData, PageVars>,
   extractPage: (data: TData) => { info: PageInfo; results: TItem[] },
@@ -20,6 +26,7 @@ export function useFetchAllPages<TData, TItem>(
       let page: number | null = 1
 
       while (page !== null) {
+        if (page > 1) await sleep(PAGE_DELAY_MS)
         const { data } = await client.query({ query, variables: { page } })
         if (!data) throw new Error('No data returned')
         const { info, results } = extractPage(data)

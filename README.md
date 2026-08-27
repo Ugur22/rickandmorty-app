@@ -110,7 +110,8 @@ page of results, so it needed its own data path:
 
 - **`useFetchAllPages`** (`hooks/useFetchAllPages.ts`) walks a paginated query end-to-end via
   `client.query` in a loop (following `info.next` until it's `null`), independent of Apollo's
-  normal `useQuery`-per-page flow used elsewhere in the app.
+  normal `useQuery`-per-page flow used elsewhere in the app. Pages are fetched with a small
+  delay between requests (see Known limitations) to avoid tripping the public API's rate limit.
 - **Aggregation is plain functions, not components** (`utils/aggregate.ts`), so it's unit-tested
   directly (`aggregate.test.ts`) without rendering anything: cast size per episode, cast size
   grouped by season (parsed from the episode code, e.g. `"S01E01"` → season `"S01"`), and
@@ -134,6 +135,7 @@ page of results, so it needed its own data path:
 - Pagination is a bare prev/next, no jump-to-page.
 - The public API rate-limits aggressively under rapid successive requests (observed during
   testing as a CORS-looking `Failed to fetch`, which is actually a non-2xx response missing
-  CORS headers) — not something the app works around, since Apollo has no retry link configured.
-  `useFetchAllPages` is the most exposed to this, since it fires every page of a paginated
-  query back-to-back with no throttling between requests.
+  CORS headers). `useFetchAllPages` was the most exposed to this, firing every page of a
+  paginated query back-to-back — fixed by adding a 200ms delay between page requests
+  (`useFetchAllPages.ts`) and a `RetryLink` with exponential backoff in front of the `HttpLink`
+  (`graphql/client.ts`) so a request that still gets rate-limited retries instead of failing.
