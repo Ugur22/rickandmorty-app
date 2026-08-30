@@ -24,8 +24,9 @@ npm run build     # production build
   (e.g. "Pilot") or its code (e.g. "S01E01"), auto-detected client-side.
 - **Analytics** (`/analytics`, bonus) — a dashboard aggregated across every episode and
   location in the API: cast size per episode, cast size trend per season (sparklines), and
-  a top-10 breakdown of locations by dimension. Tiles are drag-to-reorder (via `swapy`) and
-  the order persists to `localStorage`. See [Bonus: Analytics](#bonus-analytics) below.
+  a top-10 breakdown of locations by dimension. Tiles are drag-to-reorder (keyboard-accessible,
+  via `@dnd-kit`) and the order persists to `localStorage`. See [Bonus: Analytics](#bonus-analytics)
+  below.
 - **Dark mode** — a header toggle switches the whole app between light and dark, persisted
   across visits.
 
@@ -120,10 +121,10 @@ page of results, so it needed its own data path:
   into an "Other" bucket past the top 10 — otherwise the chart is mostly illegible slivers.
 - **Recharts** for the charts themselves — SVG-based, so it renders crisply at any size and
   doesn't drag in a canvas runtime for what's fundamentally three simple charts.
-- **`swapy`** for drag-to-reorder tiles — a small, unopinionated library that works directly
-  against existing DOM nodes (`data-swapy-slot`/`data-swapy-item` attributes) rather than
-  owning its own component tree, so it drops into the existing tile markup instead of
-  requiring the charts to be restructured around it. Order persists to `localStorage`.
+- **`@dnd-kit`** for drag-to-reorder tiles — sortable order lives in plain React state
+  (`useState` + `arrayMove` on drag end), so it plays natively with re-renders instead of
+  mutating tile DOM nodes directly. Also gets keyboard-accessible reordering (arrow keys on a
+  focused drag handle) for free. Order persists to `localStorage`.
 - Charts read `theme.mode` from Redux directly (`useAppSelector`) rather than through CSS,
   since Recharts' colors are JS props, not classes Tailwind's `dark:` variant can reach.
 - The `/analytics` route is lazy-loaded (`router.tsx`) so Recharts' bundle weight is only paid

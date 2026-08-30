@@ -1,6 +1,21 @@
-import { useEffect, useRef, useState } from "react";
-import { createSwapy } from "swapy";
-import type { Swapy, SwapEndEvent } from "swapy";
+import { useState } from "react";
+import {
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  rectSortingStrategy,
+  sortableKeyboardCoordinates,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { EpisodeCastSizeChart } from "./EpisodeCastSizeChart";
 import { DimensionBreakdownChart } from "./DimensionBreakdownChart";
 import { SeasonTrendSparklines } from "./SeasonTrendSparklines";
@@ -9,7 +24,6 @@ import type { AnalyticsEpisode, AnalyticsLocation } from "../types";
 const TILE_ORDER_STORAGE_KEY = "analytics-tile-order";
 const TILE_IDS = ["cast-size", "dimensions", "season-trend"] as const;
 type TileId = (typeof TILE_IDS)[number];
-const SLOT_IDS = TILE_IDS.map((_, index) => `slot-${index + 1}`);
 
 function readStoredOrder(): TileId[] {
   const stored = localStorage.getItem(TILE_ORDER_STORAGE_KEY);
@@ -20,16 +34,46 @@ function readStoredOrder(): TileId[] {
       Array.isArray(parsed) &&
       parsed.length === TILE_IDS.length &&
       TILE_IDS.every((id) => parsed.includes(id));
-    console.groupCollapsed("[AnalyticsBoard:persist] mount read");
-    console.info("raw", stored);
-    console.info("parsed", parsed);
-    console.info("isValidOrder", isValidOrder);
-    console.groupEnd();
     return isValidOrder ? (parsed as TileId[]) : [...TILE_IDS];
   } catch (err) {
     console.warn("[AnalyticsBoard:persist] failed to parse stored order", err);
     return [...TILE_IDS];
   }
+}
+
+interface SortableTileProps {
+  id: TileId;
+  isLast: boolean;
+  children: React.ReactNode;
+}
+
+function SortableTile({ id, isLast, children }: SortableTileProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`h-full ${isLast ? "md:col-span-2" : ""} ${isDragging ? "opacity-50" : ""}`}
+    >
+      <div className="flex h-full flex-col">
+        <div
+          {...attributes}
+          {...listeners}
+          className="mb-1 flex shrink-0 cursor-grab items-center gap-1.5 px-1 text-xs text-neutral-400 select-none active:cursor-grabbing dark:text-neutral-500"
+        >
+          <span aria-hidden="true">⠿</span> Drag to reorder
+        </div>
+        <div className="min-h-0 flex-1">{children}</div>
+      </div>
+    </div>
+  );
 }
 
 interface AnalyticsBoardProps {
@@ -38,56 +82,24 @@ interface AnalyticsBoardProps {
 }
 
 export function AnalyticsBoard({ episodes, locations }: AnalyticsBoardProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  // Only used to render the initial layout. swapy owns all reordering after
-  // mount by moving item DOM nodes directly, outside React's control — if we
-  // fed swaps back into this via setState, React would re-render and patch
-  // attributes onto DOM nodes it still thinks are in their old slot, while
-  // swapy has already physically relocated them elsewhere, corrupting the
-  // tree (observed as an uncaught "removeChild: not a child of this node").
-  const [initialOrder] = useState<TileId[]>(readStoredOrder);
+  const [order, setOrder] = useState<TileId[]>(readStoredOrder);
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
-  useEffect(() => {
-    if (!containerRef.current) return;
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
 
-    const swapy: Swapy = createSwapy(containerRef.current, {
-      animation: "dynamic",
+    setOrder((current) => {
+      const oldIndex = current.indexOf(active.id as TileId);
+      const newIndex = current.indexOf(over.id as TileId);
+      const next = arrayMove(current, oldIndex, newIndex);
+      localStorage.setItem(TILE_ORDER_STORAGE_KEY, JSON.stringify(next));
+      return next;
     });
-
-    swapy.onSwapEnd((event: SwapEndEvent) => {
-      try {
-        console.groupCollapsed("[AnalyticsBoard:persist] swapEnd");
-        console.info("hasChanged", event.hasChanged);
-        console.info("slotItemMap.asArray", event.slotItemMap.asArray);
-        if (!event.hasChanged) return;
-        // slotItemMap always reports the full, live slot->item mapping read
-        // straight from the DOM, so this is authoritative regardless of how
-        // many swaps have happened since mount.
-        const bySlot = new Map(
-          event.slotItemMap.asArray.map(({ slot, item }) => [
-            slot,
-            item as TileId,
-          ]),
-        );
-        const nextOrder = SLOT_IDS.map(
-          (slot, index) => bySlot.get(slot) ?? initialOrder[index],
-        );
-        console.info("nextOrder", nextOrder);
-
-        localStorage.setItem(TILE_ORDER_STORAGE_KEY, JSON.stringify(nextOrder));
-        console.info(
-          "readback",
-          localStorage.getItem(TILE_ORDER_STORAGE_KEY),
-        );
-      } catch (err) {
-        console.error("[AnalyticsBoard:persist] swapEnd threw", err);
-      } finally {
-        console.groupEnd();
-      }
-    });
-
-    return () => swapy.destroy();
-  }, [initialOrder]);
+  }
 
   const tiles: Record<TileId, React.ReactNode> = {
     "cast-size": <EpisodeCastSizeChart episodes={episodes} />,
@@ -96,28 +108,20 @@ export function AnalyticsBoard({ episodes, locations }: AnalyticsBoardProps) {
   };
 
   return (
-    <div
-      ref={containerRef}
-      className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2"
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragEnd={handleDragEnd}
     >
-      {initialOrder.map((tileId, index) => (
-        <div
-          key={SLOT_IDS[index]}
-          data-swapy-slot={SLOT_IDS[index]}
-          // The last slot spans the full row — as wide as the ones above it combined.
-          className={`h-full ${index === SLOT_IDS.length - 1 ? "md:col-span-2" : ""}`}
-        >
-          <div data-swapy-item={tileId} className="flex h-full flex-col">
-            <div
-              data-swapy-handle
-              className="mb-1 flex shrink-0 cursor-grab items-center gap-1.5 px-1 text-xs text-neutral-400 select-none active:cursor-grabbing dark:text-neutral-500"
-            >
-              <span aria-hidden="true">⠿</span> Drag to reorder
-            </div>
-            <div className="min-h-0 flex-1">{tiles[tileId]}</div>
-          </div>
+      <SortableContext items={order} strategy={rectSortingStrategy}>
+        <div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2">
+          {order.map((tileId, index) => (
+            <SortableTile key={tileId} id={tileId} isLast={index === order.length - 1}>
+              {tiles[tileId]}
+            </SortableTile>
+          ))}
         </div>
-      ))}
-    </div>
+      </SortableContext>
+    </DndContext>
   );
 }
