@@ -48,8 +48,14 @@ interface SortableTileProps {
 }
 
 function SortableTile({ id, isLast, children }: SortableTileProps) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -85,7 +91,9 @@ export function AnalyticsBoard({ episodes, locations }: AnalyticsBoardProps) {
   const [order, setOrder] = useState<TileId[]>(readStoredOrder);
   const sensors = useSensors(
     useSensor(PointerSensor),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
   );
 
   function handleDragEnd(event: DragEndEvent) {
@@ -116,7 +124,11 @@ export function AnalyticsBoard({ episodes, locations }: AnalyticsBoardProps) {
       <SortableContext items={order} strategy={rectSortingStrategy}>
         <div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2">
           {order.map((tileId, index) => (
-            <SortableTile key={tileId} id={tileId} isLast={index === order.length - 1}>
+            <SortableTile
+              key={tileId}
+              id={tileId}
+              isLast={index === order.length - 1}
+            >
               {tiles[tileId]}
             </SortableTile>
           ))}
